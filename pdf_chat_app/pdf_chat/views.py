@@ -86,7 +86,7 @@ def login(request):
 
 
 def logout_user(request):
-    username = request.user.username  # Get the username of the logged-out user
+    username = request.session.get('username', None)
     auth.logout(request)
     request.session.pop('username', None)
     messages.success(request, f"Thanks, {username}, for visiting our website!", extra_tags='success')
