@@ -94,7 +94,7 @@ def logout_user(request):
 
 
 
-
+pdf_data = {}
 
 # Load or create an empty chat history list in the session
 def get_or_create_chat_history(request):
@@ -125,8 +125,7 @@ def pdf_upload_view(request):
             chunks, pdf_name = process_pdf(pdf_file)
             embeddings = OpenAIEmbeddings()
             VectorStore = FAISS.from_texts(chunks, embedding=embeddings)
-            with open(f"{pdf_name}.pkl", "wb") as f:
-                pickle.dump(VectorStore, f)
+            pdf_data[pdf_name] = VectorStore  # Store data in memory instead of a file
             return render(request, 'upload_template.html', {'pdf_name': pdf_name , 'username': username})
     else:
         form = PdfUploadForm()
@@ -139,28 +138,23 @@ def chat_view(request):
     chat_history = get_or_create_chat_history(request)  # Get or create chat history
     username = request.session.get('username', None)
     if pdf_name:
-        with open(f"{pdf_name}.pkl", "rb") as f:
-            VectorStore = pickle.load(f)
-        query = request.GET.get('query', '')
-
-        if query:
-            docs = VectorStore.similarity_search(query=query, k=3)
-
-            llm = OpenAI()
-            chain = load_qa_chain(llm, chain_type="stuff")
-            response = chain({"input_documents": docs, "question": query}, return_only_outputs=True)
-            response_text = response.get('output_text', "No answer found.")
-
-            # Append the current question and its response to the chat history
-            chat_history.append({'question': query, 'response': response_text})
-
-            # Update the chat history in the session
-            request.session['chat_history'] = chat_history
+        VectorStore = pdf_data.get(pdf_name)
+        if VectorStore is not None:
+            query = request.GET.get('query', '')
+            if query:
+                docs = VectorStore.similarity_search(query=query, k=3)
+                llm = OpenAI()
+                chain = load_qa_chain(llm, chain_type="stuff")
+                response = chain({"input_documents": docs, "question": query}, return_only_outputs=True)
+                response_text = response.get('output_text', "No answer found.")
+                chat_history.append({'question': query, 'response': response_text})
+                request.session['chat_history'] = chat_history
+            else:
+                response_text = ""
+            context = {'pdf_name': pdf_name, 'query': query, 'response_text': response_text, 'chat_history': chat_history ,'username': username}
+            return render(request, 'chat_template.html', context)
         else:
-            response_text = ""
-
-        context = {'pdf_name': pdf_name, 'query': query, 'response_text': response_text, 'chat_history': chat_history ,'username': username}
-        return render(request, 'chat_template.html', context)
+            return render(request, 'error_template.html', {'error_message': 'PDF data not found.'})
     else:
         return render(request, 'error_template.html', {'error_message': 'PDF name not provided.'})
 
@@ -170,12 +164,15 @@ def end_chat_view(request):
         pdf_name = request.POST.get('pdf_name')
         if pdf_name:
             try:
-                os.remove(f"{pdf_name}.pkl")  # Delete the .pkl file
-            except OSError:
+                # Remove the PDF data from the in-memory dictionary
+                if pdf_name in pdf_data:
+                    del pdf_data[pdf_name]
+
+                # Clear the chat history from the session
+                request.session['chat_history'] = []
+
+                return redirect('upload')
+            except KeyError:
                 pass
 
-            # Clear the chat history from the session
-            request.session['chat_history'] = []
-
-        return redirect('upload')
-  
+    return render(request, 'error_template.html', {'error_message': 'PDF name not provided.'})
