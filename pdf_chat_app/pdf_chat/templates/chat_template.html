@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/chat.css'%}">
+{% endblock %}
+{% block content %}
+ <div class="container">
+        <h1>Chat with AI</h1>
+
+        <div class="chat-history" {% if chat_history|length == 0 %}style="height: 400px;"{% endif %}>
+            {% if chat_history %}
+                {% for entry in chat_history %}
+                <div class="chat-entry">
+                    <div class="chat-question">{{ entry.question }}</div>
+                    <div class="chat-response">{{ entry.response }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="chat-entry">
+                    <div class="chat-response">Welcome to PDFDialogue! Start by asking a question.</div>
+                </div>
+            {% endif %}
+        </div>
+
+        <form action="{% url 'chat' %}" method="get">
+            <input type="hidden" name="pdf_name" value="{{ pdf_name }}">
+            <div class="form-container">
+                <label for="query">Ask a question:</label>
+                <input type="text" name="query" id="query" value="{{ query }}" placeholder="Enter your question here">
+                <button type="submit">Ask</button>
+            </div>
+        </form>
+
+        <div class="end-chat-container">
+            <form action="{% url 'end_chat' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="pdf_name" value="{{ pdf_name }}">
+                <button type="submit" class="end-chat-button">End Chat</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

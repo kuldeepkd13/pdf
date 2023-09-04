@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="logincard">
+        <div class="logincontainer">
+            <img src="../static/assests/logo.png" alt="Your Logo" class="logoimg">
+            <div class="title">Registation</div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="user_details">
+                    <div class="input_pox">
+                        <span class="datails">First Name</span>
+                        <input type="text" name="first_name" id="first_name" placeholder="enter your First name" required>
+                    </div>
+                    <div class="input_pox">
+                        <span class="datails">Last Name</span>
+                        <input type="text" name="last_name" id="last_name" placeholder="enter your Last name" required>
+                    </div>
+                    <div class="input_pox">
+                        <span class="datails">Username</span>
+                        <input type="text" name="username" id="username" placeholder="enter your Username" required>
+                    </div>
+                    <div class="input_pox">
+                        <span class="datails">Email</span>
+                        <input type="text" name="email" id="email" placeholder="enter your Email" required>
+                    </div>
+    
+                    <div class="input_pox">
+                        <span class="datails">Password</span>
+                        <input type="text" name="password" id="password" placeholder="enter your Password" required>
+                    </div>
+                    <div class="input_pox">
+                        <span class="datails">Confirm Password</span>
+                        <input type="text" name="confirm_password" id="confirm_password" placeholder="Confirm your Password" required>
+                    </div>
+                </div>
+                <div class="button">
+                    <input type="submit" value="Register">
+                </div>
+                <p class="small-text">Have an account? <a href="{% url 'login' %}">Login</a></p>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
