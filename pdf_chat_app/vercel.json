@@ -1,0 +1,25 @@
+{
+    "builds": [
+      {
+        "src": "pdf_chat_app/wsgi.py",
+        "use": "@vercel/python"
+      },
+      {
+        "src": "build.sh",
+        "use": "@vercel/static-build",
+        "config": {
+          "distDir": "staticfiles"
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "pdf_chat_app/wsgi.py"
+      },
+      {
+        "src": "/static/(.*)",
+        "dest": "/static/$1"
+      }
+    ]
+  }
